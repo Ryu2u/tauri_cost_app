@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "rust_tauri2_demo",
-        "width": 800,
-        "height": 600
+        "width": 393,
+        "height": 852
       }
     ],
     "security": {

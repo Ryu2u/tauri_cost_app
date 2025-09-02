@@ -1,0 +1,13 @@
+/* For information on how to create your own theme, please see:
+http://ionicframework.com/docs/theming/ */
+:root {
+    /* These examples use the same color: sienna. */
+    --ion-text-color: #000;
+    --ion-text-color-rgb: 160, 82, 45;
+    /* These examples use the same color: lightsteelblue. */
+    --ion-background-color: #f6f6f6;
+}
+
+.custom-header {
+    padding-top: 10px;
+}
