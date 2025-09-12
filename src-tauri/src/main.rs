@@ -3,5 +3,5 @@
 
 #[tokio::main]
 async fn main() {
-    rust_tauri2_demo_lib::run()
+    rust_tauri2_demo_lib::run().await;
 }

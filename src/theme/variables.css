@@ -5,7 +5,7 @@ http://ionicframework.com/docs/theming/ */
     --ion-text-color: #000;
     --ion-text-color-rgb: 160, 82, 45;
     /* These examples use the same color: lightsteelblue. */
-    --ion-background-color: #f6f6f6;
+    --ion-background-color: #f2f2f3;
 }
 
 .custom-header {

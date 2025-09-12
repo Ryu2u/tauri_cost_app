@@ -6,7 +6,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <div class="example-content">Radio content</div>
+      <div class="ledger-list-content">Radio content</div>
     </ion-content>
   </ion-page>
 </template>
@@ -16,7 +16,7 @@ import {IonContent, IonHeader, IonPage, IonTitle, IonToolbar} from '@ionic/vue';
 </script>
 
 <style scoped>
-.example-content {
+.ledger-list-content {
   display: flex;
   align-items: center;
   justify-content: center;

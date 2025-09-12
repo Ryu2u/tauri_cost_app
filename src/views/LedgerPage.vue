@@ -5,13 +5,15 @@
         <ion-buttons slot="start">
           <ion-menu-button :auto-hide="false"></ion-menu-button>
         </ion-buttons>
-        <ion-title>Menu Button</ion-title>
+        <ion-title>账本</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <div class="example-content">
+      <div class="ledger-list-content">
         <ion-searchbar :animated="true" placeholder="搜索" :clear-icon="false"></ion-searchbar>
-        <CustomList/>
+        <template v-for="item in billList">
+          <CustomList :list="item"/>
+        </template>
       </div>
 
       <ion-fab slot="fixed" vertical="bottom" horizontal="end">
@@ -37,10 +39,37 @@
 <script setup lang="ts">
 import {IonContent, IonHeader, IonIcon, IonPage, IonToolbar} from '@ionic/vue';
 import CustomList from "@/compontes/CustomList.vue";
+import {onMounted, ref} from 'vue';
+
+type BillList = BillItem[][];
+
+const billList = ref<BillList>([]);
+
+onMounted(() => {
+  for (let i = 0; i < 3; i++) {
+    let tmp = [];
+    for (let j = 0; j < 5; j++) {
+      tmp.push({
+        title: '餐饮',
+        subTitle: '烟酒',
+        icon: 'fast-food-outline.svg',
+        cost: 25.00,
+        costType: 0,
+        time: '16:34',
+        comment: '芙蓉王'
+      })
+    }
+    billList.value.push(tmp);
+  }
+
+})
+
+
 </script>
 
 <style scoped>
-.example-content {
+.ledger-list-content {
+  padding-bottom: 100px;
   height: 100%;
 }
 </style>

@@ -1,51 +1,34 @@
 <template>
   <ion-list class="custom-list" :inset="true">
-    <ion-item>
-      <ion-label>
-        <div class="custom-list-item">
-          <div class="list-item-icon">
-            <ion-icon src="/src/assets/icons/fast-food.svg" size="large"/>
-          </div>
-          <div>
-            Pokémon Yellow
-          </div>
-        </div>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>Mega Man X</ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>The Legend of Zelda</ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>Pac-Man</ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>Super Mario World</ion-label>
-    </ion-item>
+    <template v-for="item in props.list">
+      <ion-item>
+        <ion-label class="width: 100%">
+          <CustomListItem :title="item.title"
+                          :sub-title="item.subTitle"
+                          :icon="item.icon"
+                          :cost="item.cost"
+                          :time="item.time"
+                          :comment="!!item.comment? item.comment : ''"
+                          :cost-type="item.costType"/>
+        </ion-label>
+      </ion-item>
+    </template>
   </ion-list>
 </template>
 
 <script setup lang="ts">
+import CustomListItem from "@/compontes/CustomListItem.vue";
 
-import {IonIcon} from "@ionic/vue";
+interface Props {
+  list: BillItem[]
+}
+
+const props = defineProps<Props>();
+
 </script>
 
 <style scoped>
 .custom-list {
   --ion-background-color: #ffff;
 }
-
-.custom-list-item {
-  display: flex;
-  flex-direction: row;
-
-}
-
-.list-item-icon {
-  padding: 10px;
-
-}
-
 </style>

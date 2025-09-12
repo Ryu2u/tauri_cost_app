@@ -6,7 +6,7 @@
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <div class="example-content">
+      <div class="ledger-list-content">
         <div>资产</div>
       </div>
     </ion-content>
@@ -22,7 +22,7 @@ export default {
 </script>
 
 <style scoped>
-.example-content {
+.ledger-list-content {
   display: flex;
   align-items: center;
   justify-content: center;
