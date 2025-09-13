@@ -1,4 +1,5 @@
 mod command;
+mod error;
 mod structs;
 
 use command::*;
@@ -25,7 +26,7 @@ pub async fn run() {
         })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, list_transactions_by_day])
         .manage(pool)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
