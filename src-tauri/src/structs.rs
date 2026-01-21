@@ -41,6 +41,11 @@ pub struct Transaction {
     pub comment: Option<String>,
     pub transaction_time: String,
     pub created_at: String,
+    // field not exists
+    #[sqlx(skip)]
+    pub category_name: Option<String>,
+    #[sqlx(skip)]
+    pub image: Option<String>,
 }
 
 impl Ledger {
@@ -143,6 +148,8 @@ impl Transaction {
             comment,
             transaction_time,
             created_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            category_name: None,
+            image: None,
         }
     }
 
@@ -171,11 +178,9 @@ impl Transaction {
         pool: &Pool<Sqlite>,
     ) -> Result<Vec<Transaction>, sqlx::Error> {
         let day_str = day.format("%Y-%m-%d").to_string();
-        sqlx::query_as!(
-            Transaction,
+        sqlx::query_as::<_, Transaction>(
             "select id,ledger_id,category_id,amount,comment,transaction_time,created_at from transactions where date(transaction_time) = date(?)  order by transaction_time desc",
-            day_str
-        ).fetch_all(pool).await
+        ).bind(day_str).fetch_all(pool).await
     }
 }
 

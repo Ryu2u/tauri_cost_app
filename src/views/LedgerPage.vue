@@ -51,12 +51,12 @@ onMounted(() => {
     for (let j = 0; j < 5; j++) {
       tmp.push({
         title: '餐饮',
-        subTitle: '烟酒',
+        subTitle: '三餐',
         icon: 'fast-food-outline.svg',
         cost: 25.00,
         costType: 0,
         time: '16:34',
-        comment: '芙蓉王'
+        comment: 'tttt'
       })
     }
     billList.value.push(tmp);
