@@ -191,7 +191,7 @@ mod test {
 
     #[tokio::test]
     async fn test_category_save() {
-        let con = get_connection().await;
+        let con = get_connection().await.expect("获取数据库连接失败");
         let mut vec = vec![];
         let item1 = Category::new("餐饮".to_string(), None, "1".to_string());
         let item2 = Category::new("服饰".to_string(), None, "2".to_string());
@@ -210,15 +210,17 @@ mod test {
         vec.push(item7);
         vec.push(item8);
         for x in vec {
-            Category::insert(&x, &con).await.unwrap();
+            Category::insert(&x, &con).await.expect("插入分类数据失败");
         }
     }
 
     #[tokio::test]
     async fn test_transaction_list() {
         let now = Local::now();
-        let con = get_connection().await;
-        let res = Transaction::select_list_by_day(&now, &con).await.unwrap();
+        let con = get_connection().await.expect("获取数据库连接失败");
+        let res = Transaction::select_list_by_day(&now, &con)
+            .await
+            .expect("查询当日交易记录失败");
         res.iter().for_each(|v| println!("{:?}", v));
     }
 }

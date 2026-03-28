@@ -4,6 +4,7 @@ interface BillItem {
     subTitle: string,
     cost: number,
     costType: number,
+    date: string,
     time: string,
     comment?: string
 }

@@ -3,5 +3,8 @@
 
 #[tokio::main]
 async fn main() {
-    rust_tauri2_demo_lib::run().await;
+    if let Err(e) = rust_tauri2_demo_lib::run().await {
+        eprintln!("应用启动失败: {}", e);
+        std::process::exit(1);
+    }
 }

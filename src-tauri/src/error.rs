@@ -1,4 +1,4 @@
-use crate::error::Exception::{RuntimeException, SqlException};
+use crate::error::Exception::{IoException, RuntimeException, SqlException};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
@@ -6,7 +6,8 @@ use std::fmt::{Display, Formatter};
 pub enum Exception {
     RuntimeException(String),
     SqlException(String),
-    NotFount,
+    IoException(String),
+    NotFound,
 }
 
 impl Display for Exception {
@@ -14,7 +15,22 @@ impl Display for Exception {
         match self {
             RuntimeException(e) => write!(f, "RuntimeException: {}", e),
             SqlException(e) => write!(f, "SqlException: {}", e),
-            NotFound => write!(f, "NotFound"),
+            IoException(e) => write!(f, "IoException: {}", e),
+            Exception::NotFound => write!(f, "NotFound"),
         }
+    }
+}
+
+impl std::error::Error for Exception {}
+
+impl From<sqlx::Error> for Exception {
+    fn from(e: sqlx::Error) -> Self {
+        SqlException(e.to_string())
+    }
+}
+
+impl From<std::io::Error> for Exception {
+    fn from(e: std::io::Error) -> Self {
+        IoException(e.to_string())
     }
 }
