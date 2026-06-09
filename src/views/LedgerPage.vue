@@ -23,7 +23,11 @@
     </ion-header>
 
     <ion-content class="icost-content">
-      <template v-for="group in filteredGroupedBillList">
+      <div v-if="loading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+
+      <template v-else v-for="group in filteredGroupedBillList">
         <div class="date-header">
           <div class="date-info">
             <span class="date-text">{{ group.date }}</span>
@@ -36,7 +40,7 @@
         <CustomList :list="group.items"/>
       </template>
 
-      <div v-if="filteredGroupedBillList.length === 0" class="empty-state">
+      <div v-if="!loading && filteredGroupedBillList.length === 0" class="empty-state">
         <ion-icon :icon="walletOutline" class="empty-icon"></ion-icon>
         <p>暂无记账记录</p>
         <p class="empty-hint">点击右下角按钮添加第一笔账</p>
@@ -51,6 +55,7 @@
 
     <AddTransactionModal
         :is-open="isAddModalOpen"
+        :categories="categories"
         @close="handleCloseModal"
         @save="handleSaveTransaction"
     />
@@ -58,44 +63,73 @@
 </template>
 
 <script setup lang="ts">
-import {IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage} from '@ionic/vue';
+import {IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonSpinner, toastController} from '@ionic/vue';
 import CustomList from "@/compontes/CustomList.vue";
 import AddTransactionModal from "@/compontes/AddTransactionModal.vue";
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {addOutline, chevronBack, chevronForward, optionsOutline, walletOutline} from 'ionicons/icons';
+import { listCategoriesByType, listTransactionsByMonth, addTransaction } from '@/api';
+import type { Category, BillItem, GroupedBill, AddTransactionRequest } from '@/types/types';
 
 // 模态框状态
 const isAddModalOpen = ref(false);
+
+// 加载状态
+const loading = ref(false);
 
 // 日期相关
 const currentYear = ref(new Date().getFullYear());
 const currentMonth = ref(new Date().getMonth() + 1);
 
-// 分类映射
-const categoryMap: { [key: number]: { title: string; icon: string; subTitle: string } } = {
-  1: {title: '餐饮', icon: 'fast-food-outline.svg', subTitle: '餐费'},
-  2: {title: '交通', icon: 'train-outline.svg', subTitle: '出行'},
-  3: {title: '购物', icon: 'bag-outline.svg', subTitle: '购物'},
-  4: {title: '娱乐', icon: 'film-outline.svg', subTitle: '娱乐'},
-  5: {title: '住房', icon: 'home-outline.svg', subTitle: '住房'},
-  6: {title: '医疗', icon: 'heart-outline.svg', subTitle: '医疗'},
-  7: {title: '教育', icon: 'book-outline.svg', subTitle: '教育'},
-  8: {title: '礼物', icon: 'gift-outline.svg', subTitle: '礼物'},
-  9: {title: '旅行', icon: 'airplane-outline.svg', subTitle: '旅行'},
-  10: {title: '通讯', icon: 'phone-portrait-outline.svg', subTitle: '通讯'},
-  11: {title: '工资', icon: 'cash-outline.svg', subTitle: '薪资'},
-  12: {title: '奖金', icon: 'cash-outline.svg', subTitle: '奖金'},
-  13: {title: '兼职', icon: 'cash-outline.svg', subTitle: '兼职'},
-};
+// 分类列表
+const categories = ref<Category[]>([]);
 
-// 模拟账单数据
-interface GroupedBill {
-  date: string;
-  dateFull: string;
-  items: BillItem[];
+// 交易列表
+const billList = ref<BillItem[]>([]);
+
+// 加载数据
+async function loadCategories() {
+  try {
+    categories.value = await listCategoriesByType(0); // 支出分类
+    const incomeCategories = await listCategoriesByType(1); // 收入分类
+    categories.value = [...categories.value, ...incomeCategories];
+  } catch (error) {
+    console.error('加载分类失败:', error);
+  }
 }
 
-const billList = ref<BillItem[]>([]);
+async function loadTransactions() {
+  loading.value = true;
+  try {
+    const transactions = await listTransactionsByMonth(currentYear.value, currentMonth.value);
+    billList.value = transactions.map(t => ({
+      icon: t.image || 'cash-outline.svg',
+      title: t.category_name || '未知',
+      subTitle: t.comment || '',
+      cost: t.amount,
+      costType: t.cost_type as 0 | 1,
+      date: t.transaction_time.split(' ')[0],
+      time: t.transaction_time.split(' ')[1]?.substring(0, 5) || '',
+      comment: t.comment || undefined,
+      color: t.color || undefined,
+    }));
+  } catch (error) {
+    console.error('加载交易记录失败:', error);
+    const toast = await toastController.create({
+      message: '加载数据失败',
+      duration: 2000,
+      position: 'bottom',
+    });
+    await toast.present();
+  } finally {
+    loading.value = false;
+  }
+}
+
+// 监听月份变化，重新加载数据
+watch([currentYear, currentMonth], () => {
+  loadTransactions();
+});
 
 // 计算本月收入和支出
 const totalIncome = computed(() => {
@@ -183,90 +217,48 @@ const handleCloseModal = () => {
   isAddModalOpen.value = false;
 };
 
-const handleSaveTransaction = (data: {
+const handleSaveTransaction = async (data: {
   amount: number;
   categoryId: number;
   comment: string;
   type: number;
   date: string;
 }) => {
-  const category = categoryMap[data.categoryId];
-  const now = new Date();
-  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  try {
+    const request: AddTransactionRequest = {
+      ledger_id: data.type === 0 ? 1 : 2, // 1=支出账本, 2=收入账本
+      category_id: data.categoryId,
+      amount: data.amount,
+      cost_type: data.type as 0 | 1,
+      comment: data.comment || undefined,
+      transaction_time: data.date,
+    };
+    await addTransaction(request);
 
-  const newBill: BillItem = {
-    title: category?.title || '其他',
-    subTitle: category?.subTitle || '',
-    icon: category?.icon || 'cash-outline.svg',
-    cost: data.amount,
-    costType: data.type,
-    date: data.date,
-    time: time,
-    comment: data.comment
-  };
+    const toast = await toastController.create({
+      message: '保存成功',
+      duration: 2000,
+      position: 'bottom',
+    });
+    await toast.present();
 
-  billList.value.unshift(newBill);
-  handleCloseModal();
+    // 刷新数据
+    await loadTransactions();
+    handleCloseModal();
+  } catch (error) {
+    console.error('保存失败:', error);
+    const toast = await toastController.create({
+      message: '保存失败',
+      duration: 2000,
+      position: 'bottom',
+    });
+    await toast.present();
+  }
 };
 
-onMounted(() => {
-  // 模拟数据
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-
-  billList.value = [
-    {
-      title: '餐饮',
-      subTitle: '三餐',
-      icon: 'fast-food-outline.svg',
-      cost: 25.00,
-      costType: 0,
-      date: today,
-      time: '16:34',
-      comment: '午餐'
-    },
-    {
-      title: '工资',
-      subTitle: '薪资',
-      icon: 'cash-outline.svg',
-      cost: 8000.00,
-      costType: 1,
-      date: today,
-      time: '09:00',
-      comment: '月工资'
-    },
-    {
-      title: '交通',
-      subTitle: '地铁',
-      icon: 'train-outline.svg',
-      cost: 4.00,
-      costType: 0,
-      date: yesterday,
-      time: '08:30',
-      comment: '上班通勤'
-    },
-    {
-      title: '购物',
-      subTitle: '日用品',
-      icon: 'bag-outline.svg',
-      cost: 156.50,
-      costType: 0,
-      date: yesterday,
-      time: '19:20',
-      comment: '超市采购'
-    },
-    {
-      title: '娱乐',
-      subTitle: '电影',
-      icon: 'film-outline.svg',
-      cost: 45.00,
-      costType: 0,
-      date: lastWeek,
-      time: '21:00',
-      comment: '周末电影'
-    }
-  ];
+onMounted(async () => {
+  await loadCategories();
+  await loadTransactions();
 });
 </script>
 
@@ -337,6 +329,13 @@ onMounted(() => {
 
 .icost-content {
   background: #f5f5f5;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 20px;
 }
 
 .date-header {

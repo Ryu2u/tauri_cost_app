@@ -44,6 +44,7 @@ import {
   phonePortraitOutline,
   trainOutline
 } from 'ionicons/icons';
+import type { BillItem } from '@/types/types';
 
 interface Props {
   list: BillItem[]

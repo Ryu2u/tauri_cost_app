@@ -14,10 +14,10 @@
           <span>{{ formattedDate }}</span>
         </div>
         <div class="note-input-wrapper">
-          <input 
-            type="text" 
-            v-model="comment" 
-            placeholder="添加备注" 
+          <input
+            type="text"
+            v-model="comment"
+            placeholder="添加备注"
             class="note-input"
           />
         </div>
@@ -26,14 +26,14 @@
       <!-- 金额输入 -->
       <div class="amount-section">
         <div class="type-toggle">
-          <div 
-            class="toggle-btn" 
+          <div
+            class="toggle-btn"
             :class="{ active: transactionType === 0 }"
             @click="transactionType = 0"
           >
             支出
           </div>
-          <div class="toggle-btn" 
+          <div class="toggle-btn"
             :class="{ active: transactionType === 1 }"
             @click="transactionType = 1"
           >
@@ -49,15 +49,15 @@
       <!-- 分类选择 -->
       <div class="category-section">
         <div class="category-scroll">
-          <div 
-            v-for="cat in filteredCategories" 
+          <div
+            v-for="cat in filteredCategories"
             :key="cat.id"
             class="category-item"
             :class="{ active: selectedCategory?.id === cat.id }"
             @click="selectCategory(cat)"
           >
             <div class="category-icon" :style="{ backgroundColor: cat.color }">
-              <ion-icon :icon="cat.icon" />
+              <ion-icon :icon="getIcon(cat.image)" />
             </div>
             <span class="category-name">{{ cat.name }}</span>
           </div>
@@ -67,9 +67,9 @@
       <!-- 自定义键盘 -->
       <div class="keyboard-section">
         <div class="quick-amounts">
-          <div 
-            class="quick-btn" 
-            v-for="quick in quickAmounts" 
+          <div
+            class="quick-btn"
+            v-for="quick in quickAmounts"
             :key="quick"
             @click="addQuickAmount(quick)"
           >
@@ -104,8 +104,8 @@
 
       <!-- 底部按钮 -->
       <div class="bottom-section">
-        <ion-button 
-          expand="block" 
+        <ion-button
+          expand="block"
           class="save-btn"
           :disabled="!canSave"
           @click="handleSave"
@@ -119,17 +119,17 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { 
-  IonModal, 
-  IonIcon, 
-  IonButton 
+import {
+  IonModal,
+  IonIcon,
+  IonButton
 } from '@ionic/vue';
-import { 
+import {
   calendarOutline,
-  fastFoodOutline, 
-  cashOutline, 
-  trainOutline, 
-  bagOutline, 
+  fastFoodOutline,
+  cashOutline,
+  trainOutline,
+  bagOutline,
   filmOutline,
   homeOutline,
   giftOutline,
@@ -141,30 +141,55 @@ import {
   schoolOutline,
   ribbonOutline,
   todayOutline,
-  backspaceOutline
+  backspaceOutline,
+  bookOutline,
+  heartOutline,
+  cardOutline,
 } from 'ionicons/icons';
-
-interface Category {
-  id: number;
-  name: string;
-  icon: any;
-  color: string;
-  type: number;
-}
+import type { Category } from '@/types/types';
 
 interface Emits {
   (e: 'close'): void;
-  (e: 'save', data: { 
-    amount: number; 
-    categoryId: number; 
-    comment: string; 
+  (e: 'save', data: {
+    amount: number;
+    categoryId: number;
+    comment: string;
     type: number;
     date: string;
   }): void;
 }
 
-const props = defineProps<{ isOpen: boolean }>();
+const props = defineProps<{
+  isOpen: boolean;
+  categories: Category[];
+}>();
 const emit = defineEmits<Emits>();
+
+// 图标映射
+const iconMap: Record<string, any> = {
+  'fast-food-outline.svg': fastFoodOutline,
+  'train-outline.svg': trainOutline,
+  'bag-outline.svg': bagOutline,
+  'film-outline.svg': filmOutline,
+  'home-outline.svg': homeOutline,
+  'gift-outline.svg': giftOutline,
+  'airplane-outline.svg': airplaneOutline,
+  'phone-portrait-outline.svg': phonePortraitOutline,
+  'pricetag-outline.svg': pricetagOutline,
+  'cart-outline.svg': cartOutline,
+  'medical-outline.svg': medicalOutline,
+  'school-outline.svg': schoolOutline,
+  'ribbon-outline.svg': ribbonOutline,
+  'today-outline.svg': todayOutline,
+  'book-outline.svg': bookOutline,
+  'heart-outline.svg': heartOutline,
+  'cash-outline.svg': cashOutline,
+  'card-outline.svg': cardOutline,
+};
+
+function getIcon(iconName: string) {
+  return iconMap[iconName] || cashOutline;
+}
 
 // 交易类型 0:支出 1:收入
 const transactionType = ref(0);
@@ -176,18 +201,20 @@ const comment = ref('');
 // 快捷金额
 const quickAmounts = ['10', '20', '50', '100', '200', '500'];
 
+// 当前过滤分类
+const filteredCategories = computed(() => {
+  return props.categories.filter(cat => cat.ledger_type === transactionType.value || cat.ledger_type === 2);
+});
+
 // 追加数字
 const appendNumber = (num: string) => {
-  // 检查是否已经有小数点
   if (num === '.' && amountDisplay.value.includes('.')) return;
-  // 限制小数点后两位
   if (amountDisplay.value.includes('.')) {
     const decimal = amountDisplay.value.split('.')[1];
     if (decimal && decimal.length >= 2) return;
   }
-  // 限制总长度
   if (amountDisplay.value.length >= 10) return;
-  
+
   amountDisplay.value += num;
   amount.value = parseFloat(amountDisplay.value) || 0;
 };
@@ -197,7 +224,6 @@ const addQuickAmount = (quick: string) => {
   if (amountDisplay.value === '0' || amountDisplay.value === '') {
     amountDisplay.value = quick;
   } else {
-    // 追加快捷金额
     const current = parseFloat(amountDisplay.value) || 0;
     amountDisplay.value = (current + parseFloat(quick)).toString();
   }
@@ -220,36 +246,6 @@ const deleteLast = () => {
     amount.value = parseFloat(amountDisplay.value) || 0;
   }
 };
-
-// 支出分类
-const expenseCategories = ref<Category[]>([
-  { id: 1, name: '餐饮', icon: fastFoodOutline, color: '#FF9500', type: 0 },
-  { id: 2, name: '交通', icon: trainOutline, color: '#007AFF', type: 0 },
-  { id: 3, name: '购物', icon: bagOutline, color: '#FF2D55', type: 0 },
-  { id: 4, name: '日用', icon: cartOutline, color: '#8E8E93', type: 0 },
-  { id: 5, name: '娱乐', icon: filmOutline, color: '#AF52DE', type: 0 },
-  { id: 6, name: '住房', icon: homeOutline, color: '#5856D6', type: 0 },
-  { id: 7, name: '医疗', icon: medicalOutline, color: '#FF3B30', type: 0 },
-  { id: 8, name: '教育', icon: schoolOutline, color: '#5AC8FA', type: 0 },
-  { id: 9, name: '礼物', icon: giftOutline, color: '#FF2D55', type: 0 },
-  { id: 10, name: '旅行', icon: airplaneOutline, color: '#FFCC00', type: 0 },
-  { id: 11, name: '通讯', icon: phonePortraitOutline, color: '#007AFF', type: 0 },
-  { id: 12, name: '护肤', icon: pricetagOutline, color: '#FF2D55', type: 0 },
-]);
-
-// 收入分类
-const incomeCategories = ref<Category[]>([
-  { id: 21, name: '工资', icon: cashOutline, color: '#34C759', type: 1 },
-  { id: 22, name: '奖金', icon: ribbonOutline, color: '#34C759', type: 1 },
-  { id: 23, name: '兼职', icon: todayOutline, color: '#34C759', type: 1 },
-  { id: 24, name: '理财', icon: cashOutline, color: '#34C759', type: 1 },
-  { id: 25, name: '其他', icon: cashOutline, color: '#8E8E93', type: 1 },
-]);
-
-// 当前过滤分类
-const filteredCategories = computed(() => {
-  return transactionType.value === 0 ? expenseCategories.value : incomeCategories.value;
-});
 
 // 格式化日期
 const formattedDate = computed(() => {
@@ -283,7 +279,7 @@ const handleClose = () => {
 // 保存
 const handleSave = () => {
   if (!canSave.value || !selectedCategory.value) return;
-  
+
   emit('save', {
     amount: amount.value,
     categoryId: selectedCategory.value.id,
@@ -291,7 +287,7 @@ const handleSave = () => {
     type: transactionType.value,
     date: selectedDate.value
   });
-  
+
   resetForm();
 };
 
@@ -487,6 +483,12 @@ watch(() => props.isOpen, (newVal) => {
   background: white;
   padding: 16px 0;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.category-section::-webkit-scrollbar {
+  display: none;
 }
 
 .category-scroll {
