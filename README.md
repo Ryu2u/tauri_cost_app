@@ -1,16 +1,108 @@
-# Tauri + Vue + TypeScript
+# 简易记账本
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+一个基于 **Tauri 2 + Vue 3 + Rust + SQLite** 构建的跨平台桌面记账应用，支持账本管理、分类标签、收支记录和资产统计等功能。
 
-## Recommended IDE Setup
+## 功能特性
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- **多账本管理** — 支持创建多个账本，分别管理不同场景（个人/家庭/旅行等）
+- **收支分类** — 内置常用收支分类，支持自定义分类和图标
+- **标签系统** — 为每笔交易打标签，灵活筛选和统计
+- **资产管理** — 记录和管理各类资产（现金/银行卡/电子钱包等）
+- **数据持久化** — 基于 SQLite 本地存储，数据安全可靠
+- **原生桌面体验** — Tauri 构建，体积小巧，运行流畅
 
-## Type Support For `.vue` Imports in TS
+## 技术栈
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
+| 层级 | 技术 |
+|------|------|
+| 前端框架 | Vue 3 + TypeScript |
+| UI 组件 | Ionic Vue |
+| 构建工具 | Vite |
+| 桌面框架 | Tauri 2 (Rust) |
+| 数据库 | SQLite (sqlx) |
+| 路由 | Vue Router |
 
-1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
-2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
+## 快速开始
 
-You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+### 环境要求
+
+- [Node.js](https://nodejs.org/) >= 18
+- [Rust](https://rustup.rs/) 稳定版
+- 推荐 IDE: VS Code + Vue Volar + rust-analyzer
+
+### 安装依赖
+
+```bash
+# 安装前端依赖
+npm install
+
+# Rust 依赖会在首次构建时自动拉取
+```
+
+### 开发调试
+
+```bash
+# 启动开发服务器（含热更新）
+npm run tauri dev
+```
+
+### 构建发布
+
+```bash
+# 构建生产版本
+npm run tauri build
+```
+
+构建产物位于 `src-tauri/target/release/bundle/`。
+
+## 项目结构
+
+```
+.
+├── src/                          # 前端源码
+│   ├── api/                      # API 封装（调用 Tauri 命令）
+│   ├── compontes/                # 公共组件
+│   ├── router/                   # 路由配置
+│   ├── types/                    # TypeScript 类型定义
+│   ├── views/                    # 页面视图
+│   │   ├── LedgerPage.vue        # 记账首页
+│   │   ├── AssetsPage.vue        # 资产管理
+│   │   └── StatisticsPage.vue    # 统计报表
+│   └── main.ts                   # 入口文件
+│
+├── src-tauri/                    # Tauri / Rust 后端
+│   ├── db/migrations/            # 数据库迁移脚本
+│   └── src/
+│       ├── command.rs            # Tauri IPC 命令
+│       ├── structs.rs            # 数据模型（Ledger/Category/Tags/Transaction）
+│       ├── lib.rs                # 应用初始化
+│       └── main.rs               # 入口
+│
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+```
+
+## 数据模型
+
+| 实体 | 说明 |
+|------|------|
+| `Ledger` | 账本（名称、类型、图标） |
+| `Category` | 收支分类（名称、图标、颜色、父分类） |
+| `Tags` | 标签（名称、颜色） |
+| `Transaction` | 交易记录（金额、类型、时间、备注、关联账本和分类） |
+| `Asset` | 资产账户（名称、类型、余额） |
+
+## 开发计划
+
+- [x] 账本/分类/标签 CRUD
+- [x] 交易记录增删改查
+- [x] 资产页面
+- [x] 数据统计
+- [ ] 数据导入导出（CSV / Excel）
+- [ ] 图表可视化（收支趋势、分类占比）
+- [ ] 多语言支持
+
+## 开源协议
+
+[MIT](LICENSE)
